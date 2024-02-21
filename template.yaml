@@ -1,0 +1,211 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Reservation App API
+
+  SAM Template for Reservation App API
+
+Parameters:
+  CodeBucketName:
+    Type: String
+    Default: 'aws-websockets-adaptor'
+    Description: (Required) The name of the S3 bucket where the Lambda function code is stored. Minimum 3 characters
+
+Resources:
+  ReservationApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: reservation-api
+      ProtocolType: HTTP
+
+  ProxyRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ReservationApi
+      RouteKey: 'ANY /{proxy+}'
+      AuthorizationType: NONE
+      OperationName: ApiEndpoints
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref ProxyRouteAnyMethod
+  
+  ProxyRouteAnyMethod:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ReservationApi
+      PayloadFormatVersion: '2.0'
+      Description: ProxyRoute Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ReservationApiLambdaFunction.Arn}/invocations
+  
+  
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+      - ProxyRoute
+    Properties:
+      ApiId: !Ref ReservationApi
+  
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: prod
+      Description: Prod Stage
+      DeploymentId: !Ref Deployment
+      ApiId: !Ref ReservationApi
+  
+  ReservationApiTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "pk"
+          AttributeType: "S"
+        - AttributeName: "sk"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "pk"
+          KeyType: "HASH"
+        - AttributeName: "sk"
+          KeyType: "RANGE"
+      BillingMode:
+        PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: True
+      TableName: reservations
+
+  ReservationApiLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ReservationApiLambdaFunction
+      CodeUri:
+        Bucket: !Ref CodeBucketName
+        Key: deploy.zip
+      Handler: Api
+      Role: !GetAtt ReservationApiLambdaFunctionExecutionRole.Arn
+      MemorySize: 512
+      Timeout: 180
+      Runtime: dotnet6
+      Environment:
+        Variables:
+          TABLE_NAME: users
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: users
+  
+  ReservationApiLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/ReservationApiLambdaFunction"
+      RetentionInDays: 14
+  
+  ReservationApiLambdaFunctionPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - ReservationApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ReservationApiLambdaFunction
+      Principal: apigateway.amazonaws.com
+
+  ReservationApiLambdaFunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: allowLambdaLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: arn:aws:logs:*:*:*
+        - PolicyName: ReservationApiLambdaDbPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: !GetAtt ReservationApiTable.Arn
+        - PolicyName: ReservationApiLambdaSQSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:*
+                Resource: arn:aws:sqs:*:*:*
+        - PolicyName: ReservationApiLambdaSNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:*
+                Resource: arn:aws:sns:*:*:*
+        - PolicyName: allowParameterStore
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParametersByPath
+                Resource: '*'
+
+        - PolicyName: allowS3AsAdmin
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource: '*'
+
+        - PolicyName: allowRekognition
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - rekognition:CompareFaces
+                  - rekognition:DetectLabels
+                Resource: '*'
+  
+  ReservationApiEventBus:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: ReservationApiEventBus
+  
+  ReservationApiEventBusParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /reservation-api/EventBusSettings
+      Type: String
+      Value: !Join [ '', [ '{"IsEnabled":true,"TopicArn":"',!Ref ReservationApiEventBus,'"}' ] ]
+      Description: JWT
+
+  ReservationApiApiKey:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /reservation-api/ApiKeyValidationSettings
+      Type: String
+      Value: !Join [ '', [ '{"IsEnabled":false,"HeaderName":"x-api-key","WhiteList":["/swagger"],"ApiKey":"',!Ref AWS::StackId,'"}' ] ]
+      Description: ReservationApiKeyValidationSettings
+
+Outputs:
+  ReservationApiURI:
+    Description: "The Rest URI to connect to"
+    Value: !Join [ '', [ 'https://', !Ref ReservationApi, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/','prod' ] ]
