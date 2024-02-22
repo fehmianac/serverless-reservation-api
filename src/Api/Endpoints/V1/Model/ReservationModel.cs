@@ -1,3 +1,5 @@
+using FluentValidation;
+
 namespace Api.Endpoints.V1.Model;
 
 public class ReservationModel
@@ -6,4 +8,12 @@ public class ReservationModel
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public string? Description { get; set; }
+}
+
+public class ReservationModelValidator : AbstractValidator<ReservationModel>
+{
+    public ReservationModelValidator()
+    {
+        
+    }
 }

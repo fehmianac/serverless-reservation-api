@@ -41,12 +41,12 @@ public class ReservationRepository : DynamoRepository, IReservationRepository
             cancellationToken);
     }
 
-    public async Task<bool> DeleteAsync(List<IEntity> entities, CancellationToken cancellationToken)
+    public async Task<bool> DeleteAsync(List<IEntity> updatedEntities, List<IEntity> entities,
+        CancellationToken cancellationToken)
     {
-        await BatchWriteAsync(new List<IEntity>(), entities, cancellationToken);
+        await BatchWriteAsync(updatedEntities, entities, cancellationToken);
         return true;
     }
-
 
     public Task<List<ItemReservationMappingEntity>> GetItemReservationsAsync(string itemId,
         CancellationToken cancellationToken)

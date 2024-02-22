@@ -17,8 +17,8 @@ public class GetAll : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        startDate ??= DateTime.UtcNow.AddDays(-30);
-        endDate ??= DateTime.UtcNow;
+        startDate ??= DateTime.UtcNow.AddDays(-15);
+        endDate ??= DateTime.UtcNow.AddDays(15);
         var reservations = await reservationService.GetReservationsAsync(itemId, startDate.Value, endDate.Value, cancellationToken);
         return Results.Ok(reservations);
     }

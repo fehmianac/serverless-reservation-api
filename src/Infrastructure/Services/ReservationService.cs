@@ -47,10 +47,9 @@ public class ReservationService : IReservationService
          if(dailyReservationEntity != null)
          {
              dailyReservationEntity.Items.Remove(id);
-             entities.Add(dailyReservationEntity);
          }
          
-         await _reservationRepository.DeleteAsync(entities, cancellationToken);
+         await _reservationRepository.DeleteAsync(new List<IEntity>{dailyReservationEntity},entities, cancellationToken);
          return true;
     }
 

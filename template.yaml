@@ -90,10 +90,10 @@ Resources:
       Runtime: dotnet6
       Environment:
         Variables:
-          TABLE_NAME: users
+          TABLE_NAME: reservations
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: users
+            TableName: reservations
   
   ReservationApiLambdaFunctionLogGroup:
     Type: AWS::Logs::LogGroup

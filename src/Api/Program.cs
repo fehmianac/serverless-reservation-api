@@ -3,8 +3,12 @@ using Amazon.Extensions.Configuration.SystemsManager;
 using Amazon.SimpleNotificationService;
 using Api.Context;
 using Api.Infrastructure;
+using Domain.Repositories;
+using Domain.Services;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
@@ -27,9 +31,11 @@ builder.Services.AddAWSService<IAmazonDynamoDB>();
 builder.Services.AddAWSLambdaHosting(Environment.GetEnvironmentVariable("ApiGatewayType") == "RestApi" ? LambdaEventSource.RestApi : LambdaEventSource.HttpApi);
 var option = builder.Configuration.GetAWSOptions();
 builder.Services.AddDefaultAWSOptions(option);
-
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 
 builder.Logging.ClearProviders();
 // Serilog configuration        
