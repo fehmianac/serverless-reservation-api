@@ -1,6 +1,7 @@
 using Api.Endpoints.V1.Model;
 using Api.Infrastructure;
 using Api.Infrastructure.Contract;
+using Domain.Domain;
 using Domain.Entities;
 using Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -25,8 +26,14 @@ public class Put : IEndpoint
             };
         }
 
-        entity.WorkingHours = request.WorkingHours;
+        entity.WorkingHours = request.WorkingHours.Select(q=> new ItemConfigWorkingHourModel()
+        {
+            DayOfWeek = q.DayOfWeek,
+            Open = TimeSpan.Parse(q.Open),
+            Close = TimeSpan.Parse(q.Close)
+        }).ToList();
         entity.SlotCountAtSameTime = request.SlotCountAtSameTime;
+        entity.DurationMinutes = request.DurationMinutes;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await configRepository.SaveAsync(entity, cancellationToken);

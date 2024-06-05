@@ -11,16 +11,11 @@ public class ItemConfigEntity : IEntity
 
     [JsonPropertyName("sk")] public string Sk => ItemId;
     [JsonPropertyName("itemId")] public string ItemId { get; set; } = default!;
-
     [JsonPropertyName("workingHours")] public List<ItemConfigWorkingHourModel> WorkingHours { get; set; } = new();
-
-    [JsonPropertyName("slotCountAtSameTime")]
-    public int SlotCountAtSameTime { get; set; }
-
+    [JsonPropertyName("slotCountAtSameTime")] public int SlotCountAtSameTime { get; set; }
     [JsonPropertyName("CreatedAt")] public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     [JsonPropertyName("UpdatedAt")] public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-    
+    [JsonPropertyName("durationMinutes")] public int DurationMinutes { get; set; }
+
     public static string GetPk() => "itemConfig";
-
-
 }

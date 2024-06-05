@@ -34,6 +34,7 @@ builder.Services.AddDefaultAWSOptions(option);
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+builder.Services.AddScoped<IConfigRepository,ConfigRepository>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 

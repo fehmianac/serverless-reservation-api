@@ -11,7 +11,7 @@ public class ConfigRepository : DynamoRepository, IConfigRepository
     {
     }
 
-    protected override string GetTableName() => "reservation";
+    protected override string GetTableName() => "reservations";
 
     public Task<ItemConfigEntity?> GetAsync(string itemId, CancellationToken cancellationToken = default)
     {
