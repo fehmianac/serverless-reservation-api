@@ -1,3 +1,4 @@
+using System.Reflection;
 using Amazon.DynamoDBv2;
 using Amazon.Extensions.Configuration.SystemsManager;
 using Amazon.SimpleNotificationService;
@@ -53,7 +54,28 @@ builder.Services.AddScoped<IApiContext, ApiContext>();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(option =>
+{
+    option.CustomOperationIds(e =>
+    {
+        // Extract and join route values
+        var routeValues = string.Join(
+            "_",
+            e.ActionDescriptor.RouteValues.OrderByDescending(o => o.Key)
+                .Select(i => i.Value)
+        );
+
+        // Extract the namespace from the MethodInfo in EndpointMetadata
+        var methodInfo = e
+            .ActionDescriptor.EndpointMetadata.OfType<MethodInfo>()
+            .FirstOrDefault();
+        var namespaceName =
+            methodInfo?.DeclaringType?.Namespace?.Split('.').Last() ?? "Default";
+
+        // Return the custom operation ID including the namespace and route values
+        return $"{namespaceName}_{routeValues}";
+    });
+});
 
 var app = builder.Build();
 
