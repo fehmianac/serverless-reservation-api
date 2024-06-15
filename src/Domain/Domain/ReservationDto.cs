@@ -10,6 +10,8 @@ public class ReservationDto
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public string? Description { get; set; }
+    
+    public Dictionary<string, string> AdditionalData { get; set; } = new();
 }
 
 public static class ReservationDtoMapper
@@ -23,7 +25,8 @@ public static class ReservationDtoMapper
             UserId = entity.UserId,
             StartDate = entity.StartDate,
             EndDate = entity.EndDate,
-            Description = entity.Description
+            Description = entity.Description,
+            AdditionalData = entity.AdditionalData
         };
     }
 }

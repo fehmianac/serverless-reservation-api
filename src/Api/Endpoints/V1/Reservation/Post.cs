@@ -32,7 +32,8 @@ public class Post : IEndpoint
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             Description = request.Description,
-            UserId = apiContext.CurrentUserId
+            UserId = apiContext.CurrentUserId,
+            AdditionalData = request.AdditionalData
         };
         await reservationService.CreateReservationAsync(reservationDto, cancellationToken);
         return Results.Ok();

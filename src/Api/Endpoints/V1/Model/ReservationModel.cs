@@ -8,6 +8,8 @@ public class ReservationModel
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public string? Description { get; set; }
+
+    public Dictionary<string, string> AdditionalData { get; set; } = new();
 }
 
 public class ReservationModelValidator : AbstractValidator<ReservationModel>

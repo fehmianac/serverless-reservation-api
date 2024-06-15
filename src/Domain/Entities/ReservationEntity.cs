@@ -13,5 +13,7 @@ public class ReservationEntity : IEntity
     [JsonPropertyName("startDate")] public DateTime StartDate { get; set; }
     [JsonPropertyName("endDate")] public DateTime EndDate { get; set; }
     [JsonPropertyName("description")] public string? Description { get; set; }
+    [JsonPropertyName("additionalData")] public Dictionary<string, string> AdditionalData { get; set; } = new();
+
     public static string GetPk() => "reservation";
 }
